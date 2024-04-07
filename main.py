@@ -1,41 +1,74 @@
-# База
 import pygame
+import sys
+import random
+
+# Инициализация Pygame
 pygame.init()
 
-window_size = (800, 600)
-screen = pygame.display.set_mode(window_size)
-pygame.display.set_caption("Тестовый проект")
-image = pygame.image.load('picPython.png')
-image_rect = image.get_rect()
+# Основные параметры окна
+screen_width, screen_height = 600, 400
+screen = pygame.display.set_mode((screen_width, screen_height))
+pygame.display.set_caption("Змейка")
 
-# speed = 5
+# Цвета
+BLACK = (0, 0, 0)
+GREEN = (0, 255, 0)
+RED = (255, 0, 0)
 
-run = True
+# Параметры змейки и еды
+snake_pos = [[100, 50], [90, 50], [80, 50]]  # Список сегментов змеи
+snake_speed = [10, 0]  # Начальное движение змеи по горизонтали
+food_pos = [random.randrange(1, (screen_width//10)) * 10, random.randrange(1, (screen_height//10)) * 10]  # Случайное расположение еды
+food_spawn = True
+score = 0
 
-while run:
+# ФПС
+clock = pygame.time.Clock()
+fps = 10
+
+# Запуск основного цикла игры
+running = True
+while running:
+    # Обработка событий
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            run = False
+            running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_UP and snake_speed[1] != 10:
+                snake_speed = [0, -10]
+            elif event.key == pygame.K_DOWN and snake_speed[1] != -10:
+                snake_speed = [0, 10]
+            elif event.key == pygame.K_LEFT and snake_speed[0] != 10:
+                snake_speed = [-10, 0]
+            elif event.key == pygame.K_RIGHT and snake_speed[0] != -10:
+                snake_speed = [10, 0]
 
-    # keys = pygame.key.get_pressed()
-    # if keys[pygame.K_LEFT]:
-    #     image_rect.x -= speed
-    # if keys[pygame.K_RIGHT]:
-    #     image_rect.x += speed
-    # if keys[pygame.K_UP]:
-    #     image_rect.y -= speed
-    # if keys[pygame.K_DOWN]:
-    #     image_rect.y += speed
+    # Движение змейки
+    snake_pos.insert(0, list(map(lambda x, y: x + y, snake_pos[0], snake_speed)))
+    if snake_pos[0] == food_pos:
+        score += 1
+        food_spawn = False
+    else:
+        snake_pos.pop()
 
-        if event.type == pygame.MOUSEMOTION:
-            mouseX, mouseY = pygame.mouse.get_pos()
-            image_rect.x = mouseX -40
-            image_rect.y = mouseY -40
+    # Появление новой еды
+    if not food_spawn:
+        food_pos = [random.randrange(1, (screen_width//10)) * 10, random.randrange(1, (screen_height//10)) * 10]
+    food_spawn = True
 
+    # Отрисовка
+    screen.fill(BLACK)
+    for pos in snake_pos:
+        pygame.draw.rect(screen, GREEN, pygame.Rect(pos[0], pos[1], 10, 10))
+    pygame.draw.rect(screen, RED, pygame.Rect(food_pos[0], food_pos[1], 10, 10))
 
-    screen.fill((0, 0, 0))
-    screen.blit(image, image_rect)
+    # Проверка столкновения змейки со стенами или с собой
+    if snake_pos[0][0] >= screen_width or snake_pos[0][0] < 0 or snake_pos[0][1] >= screen_height or snake_pos[0][1] < 0 or snake_pos[0] in snake_pos[1:]:
+        running = False
+
     pygame.display.flip()
+    clock.tick(fps)
 
+print(f"Ваш счет: {score}")
 pygame.quit()
-
+sys.exit()
